@@ -5,14 +5,13 @@ const {
 module.exports = (sequelize, DataTypes) => {
   class Order extends Model {
     static associate(models) {
-      Order.belongsToMany(models.Product, {
-        through: "ProductOrder",
-        as: "product",
-        foreignKey: "order_id",
-      });
-      // Order.belongsTo(models.User, {
-      //   foreignKey: 'user_id',
-      // });
+     Order.belongsTo(models.User, {
+       foreignKey: 'user_id',
+     }),
+     Order.belongsToMany(models.Product, {
+       through: models.ProductOrder,
+       foreignKey: 'order_id',
+     });
     }
   };
   Order.init({
@@ -30,7 +29,7 @@ module.exports = (sequelize, DataTypes) => {
     },
   }, {
     sequelize,
-    timestamps: false, 
+    // timestamps: false,
     modelName: 'Order',
     tableName: 'Order',
   });

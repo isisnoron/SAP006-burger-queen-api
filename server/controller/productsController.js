@@ -2,20 +2,31 @@ const { Product } = require("../db/models");
 
 const getAllProducts = (req, res, next) => {
   Product.findAll()
-    .then((result) => {
-      res.status(200).json(result);
-    })
-    .catch(next);
+  .then((result) => {
+    res.status(200).json(result);
+  })
+  .catch((error) =>
+      res.status(400).json({
+        code: 400,
+        error: error.message
+      })
+    );
 };
 
 
 const getProductById = (req, res, next) => {
   Product.findByPk(req.params.productId)
-    .then((result) => {
-      res.status(200).json(result);
-    })
-    .catch(next);
+  .then((result) => {
+    res.status(200).json(result);
+  })
+  .catch((error) =>
+      res.status(400).json({
+        code: 400,
+        error: error.message
+      })
+    );
 };
+
 
 const postProduct = (req, res, next) => {
   const { name, flavor, complement, price, image, type, subtype } = req.body;

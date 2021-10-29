@@ -1,25 +1,52 @@
-const { Order } = require("../db/models");
+const { Order, ProductOrder, Product } = require("../db/models");
 
-// const express = require("express");
-// const app = express()
-// const isis = [];
-// app.use(express.json())
-// app.listen(3330, () => console.log("agora vai em nome de Deus"));
-
-// app.post("/orders", (request, response) => {
-//   const { title, name } =  request.body;
-//   const julli = {title, name}
-//   isis.push(julli)
-//   return response.json(julli)
-// });
+const getOrderWithProducts = (id) =>
+  Order.findByPk(id, {
+    include: [
+      {
+        model: Product,
+        as: "Products",
+        required: false,
+        attributes: ["id", "name", "flavor", "complement"],
+        through: {
+          model: ProductOrder,
+          attributes: ["qtd"],
+        },
+      },
+    ],
+  });
 
 const getAllOrders = (req, res) => {
- Order.findAll()
+ Order.findAll({
+  include: [
+    {
+      model: Product,
+      as: 'Product',
+      required: false,
+      attributes: [
+        'id',
+        'name',
+        'price',
+        'flavor',
+        'complement',
+        'image',
+        'type',
+        'sub_type',
+      ],
+      through: {
+        model: ProductOrder,
+        as: 'ProductOrder',
+        attributes: ['qtd'],
+      },
+    },
+  ],
+})
  .then((result) => {
   res.status(200).send(result);
  });
- 
+
 };
+
 const getOrderById = (req, res) => {
   Order.findByPk(req.params.orderId)
     .then((result) => {
@@ -32,19 +59,28 @@ const getOrderById = (req, res) => {
     );
 };
 
-// não funciona, falta terminar
-const postOrders = (req, res, next) => {
-  const { client_name, user_id, table, status } = req.body;
-  Order.create({
+const postOrders = async (req, res) => {
+  const { client_name, user_id, table, products } = req.body;
+  const order = await Order.create({
     client_name,
-    user_id,
     table,
-    status,
-  })
-    .then((result) => {
-      res.status(201).json(result);
-    })
-    .catch(next);
+    user_id,
+    status: "pending",
+    processedAt: new Date(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  });
+
+  const items = products.map((product) => ({
+    order_id: order.id,
+    product_id: product.id, 
+    qtd: product.qtd,
+  }));
+  console.log(items)
+  await ProductOrder.bulkCreate(items);
+  const newOrder = await getOrderWithProducts(order.id);
+
+  res.status(201).send(newOrder);
 };
 
 const putOrder = (req, res, next) => {
